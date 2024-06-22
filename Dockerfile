@@ -61,17 +61,17 @@ RUN filebrowser -r /app -p 8080 -a 0.0.0.0 -d /config/filebrowser.db config init
 VOLUME [ "/app/assets/weights", "/app/logs", "/app/audio", "/app/dataset" ]
 
 # Créer le script entrypoint.sh
-RUN echo "#!/bin/bash" > /app/entrypoint.sh \
+RUN echo "#!/bin/bash" > /app/run.sh \
+ && echo "" >> /app/run.sh \
+ && echo "# Démarrer FileBrowser en arrière-plan" >> /app/run.sh \
+ && echo "filebrowser -r /app -p 8080 -d /config/filebrowser.db &" >> /app/run.sh \
+ && echo "" >> /app/run.sh \
+ && echo "# Exécuter votre script Python" >> /app/run.sh \
+ && echo "python3 infer-web.py &" >> /app/run.sh \
  && echo "" >> /app/entrypoint.sh \
- && echo "# Démarrer FileBrowser en arrière-plan" >> /app/entrypoint.sh \
- && echo "filebrowser -r /app -p 8080 -d /config/filebrowser.db &" >> /app/entrypoint.sh \
- && echo "" >> /app/entrypoint.sh \
- && echo "# Exécuter votre script Python" >> /app/entrypoint.sh \
- && echo "python3 infer-web.py &" >> /app/entrypoint.sh \
- && echo "" >> /app/entrypoint.sh \
- && echo "# Exécuter TensorBoard en arrière-plan" >> /app/entrypoint.sh \
- && echo "tensorboard --logdir /app/logs --bind_all" >> /app/entrypoint.sh \
- && chmod +x /app/entrypoint.sh
+ && echo "# Exécuter TensorBoard en arrière-plan" >> /app/run.sh \
+ && echo "tensorboard --logdir /app/logs --bind_all" >> /app/run.sh \
+ && chmod +x /app/run.sh
 
 # Définir la commande par défaut
-CMD ["/app/entrypoint.sh"]
+CMD ["/app/run.sh"]
