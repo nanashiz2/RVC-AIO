@@ -13,7 +13,7 @@ EXPOSE 8080
 
 # Installer les dépendances système et Python
 RUN apt install -y -qq python3.10 python3-pip python3.10-venv wget
-RUN apt install -y -qq ffmpeg aria2 unzip
+RUN apt install -y -qq ffmpeg aria2 unzip dos2unix
 RUN pip3 install -r requirements.txt
 RUN pip3 install tensorboard
 RUN pip3 install numpy==1.24.3
@@ -27,7 +27,6 @@ RUN aria2c --console-log-level=error -c -x 16 -s 16 -k 1M https://huggingface.co
 RUN aria2c --console-log-level=error -c -x 16 -s 16 -k 1M https://huggingface.co/lj1995/VoiceConversionWebUI/resolve/main/uvr5_weights/HP5-主旋律人声vocals+其他instrumentals.pth -d assets/uvr5_weights/ -o HP5-主旋律人声vocals+其他instrumentals.pth
 RUN aria2c --console-log-level=error -c -x 16 -s 16 -k 1M https://huggingface.co/lj1995/VoiceConversionWebUI/resolve/main/hubert_base.pt -d assets/hubert -o hubert_base.pt
 RUN aria2c --console-log-level=error -c -x 16 -s 16 -k 1M https://huggingface.co/lj1995/VoiceConversionWebUI/resolve/main/rmvpe.pt -d assets/hubert -o rmvpe.pt
-
 
 # Modifier les chemins et les chaînes de caractères dans infer-web.py
 RUN sed -i 's|E:\\\\codes\\\\py39\\\\test-20230416b\\\\todo-songs\\\\冬之花clip1.wav|/app/audio/clip.wav|g' /app/infer-web.py \
@@ -45,7 +44,6 @@ RUN sed -i 's|C:\\\\Users\\\\liujing04\\\\Desktop\\\\Z\\\\冬之花clip1.wav|/ap
 # Modifier les chemins dans tools/infer/infer-pm-index256.py
 RUN sed -i 's|todo-songs/%s|/app/audio/%s|g' /app/tools/infer/infer-pm-index256.py
 
-
 # Installer FileBrowser
 RUN wget https://github.com/filebrowser/filebrowser/releases/download/v2.0.16/linux-amd64-filebrowser.tar.gz \
  && tar -xzvf linux-amd64-filebrowser.tar.gz \
@@ -58,21 +56,8 @@ RUN filebrowser -r /app -p 8080 -a 0.0.0.0 -d /config/filebrowser.db config init
 # Définir les volumes
 VOLUME [ "/app/assets/weights", "/app/logs", "/app/audio", "/app/dataset" ]
 
-# Créer le script entrypoint.sh
-RUN apt install -y dos2unix
-RUN echo "#!/bin/bash\n\
-\n\
-# Démarrer FileBrowser en arrière-plan\n\
-filebrowser -r /app -p 8080 -d /config/filebrowser.db &\n\
-\n\
-# Exécuter votre script Python\n\
-python3 infer-web.py &\n\
-\n\
-# Exécuter TensorBoard en arrière-plan\n\
-tensorboard --logdir /app/logs --bind_all" > /app/entrypoint.sh \
- && dos2unix /app/entrypoint.sh \
- && chmod +x /app/entrypoint.sh
-
-# Définir la commande par défaut
-CMD ["/app/entrypoint.sh"]
+# Définir la commande par défaut pour démarrer les services
+CMD filebrowser -r /app -p 8080 -d /config/filebrowser.db & \
+    python3 infer-web.py & \
+    tensorboard --logdir /app/logs --bind_all
 
