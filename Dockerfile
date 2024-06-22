@@ -13,7 +13,7 @@ EXPOSE 7865
 EXPOSE 6006 
 EXPOSE 8080 
 
-# Installer les dépendances système et Python
+# Installerr les dépendances système et Python
 RUN apt install -y -qq python3.10 python3-pip python3.10-venv wget
 RUN apt install -y -qq ffmpeg aria2 unzip
 RUN pip3 install -r requirements.txt
