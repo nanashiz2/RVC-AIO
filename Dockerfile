@@ -1,5 +1,3 @@
-# syntax=docker/dockerfile:1
-
 FROM ubuntu:22.04
 
 # Cloner le dépôt GitHub
@@ -13,7 +11,7 @@ EXPOSE 7865
 EXPOSE 6006 
 EXPOSE 8080 
 
-# Installerr les dépendances système et Python
+# Installer les dépendances système et Python
 RUN apt install -y -qq python3.10 python3-pip python3.10-venv wget
 RUN apt install -y -qq ffmpeg aria2 unzip
 RUN pip3 install -r requirements.txt
@@ -61,17 +59,20 @@ RUN filebrowser -r /app -p 8080 -a 0.0.0.0 -d /config/filebrowser.db config init
 VOLUME [ "/app/assets/weights", "/app/logs", "/app/audio", "/app/dataset" ]
 
 # Créer le script entrypoint.sh
-RUN echo "#!/bin/bash" > /app/run.sh \
- && echo "" >> /app/run.sh \
- && echo "# Démarrer FileBrowser en arrière-plan" >> /app/run.sh \
- && echo "filebrowser -r /app -p 8080 -d /config/filebrowser.db &" >> /app/run.sh \
- && echo "" >> /app/run.sh \
- && echo "# Exécuter votre script Python" >> /app/run.sh \
- && echo "python3 infer-web.py &" >> /app/run.sh \
- && echo "" >> /app/entrypoint.sh \
- && echo "# Exécuter TensorBoard en arrière-plan" >> /app/run.sh \
- && echo "tensorboard --logdir /app/logs --bind_all" >> /app/run.sh \
- && chmod +x /app/run.sh
+RUN apt install -y dos2unix
+RUN echo "#!/bin/bash\n\
+\n\
+# Démarrer FileBrowser en arrière-plan\n\
+filebrowser -r /app -p 8080 -d /config/filebrowser.db &\n\
+\n\
+# Exécuter votre script Python\n\
+python3 infer-web.py &\n\
+\n\
+# Exécuter TensorBoard en arrière-plan\n\
+tensorboard --logdir /app/logs --bind_all" > /app/entrypoint.sh \
+ && dos2unix /app/entrypoint.sh \
+ && chmod +x /app/entrypoint.sh
 
 # Définir la commande par défaut
-CMD ["/app/run.sh"]
+CMD ["/app/entrypoint.sh"]
+
